@@ -6,7 +6,7 @@ import Parentesco from './pages/apoderados/Parentesco';
 import Prueba from './pages/Prueba';
 
 import Alumno from './pages/alumnos/Alumno.jsx';
-
+import AlumnoHorario from './pages/alumnos/AlumnoHorario.jsx';
 
 import {
   BrowserRouter,
@@ -26,6 +26,7 @@ function App() {
         <Route path='/prueba' element={<Prueba/>}/>
 
         <Route path="/alumno" element={<Alumno/>}/>
+        <Route path="/horario" element={<AlumnoHorario/>}/>
       </Routes>
     </BrowserRouter>
   );

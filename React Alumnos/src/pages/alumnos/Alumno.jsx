@@ -1,386 +1,231 @@
-import { Link } from "react-router-dom";
-import React, { Component } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-
 import "bootstrap/dist/css/bootstrap.min.css";
 import Table from "react-bootstrap/Table";
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 
-class Alumno extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      alumnos: [],
-      pos: null,
-      titulo: "AGREGAR ALUMNO",
-      id: 0,
-      nombre: "",
-      apellido: "",
-      fecha_nacimiento: "",
-      foto: "",
-    };
-    this.cambioNombre = this.cambioNombre.bind(this);
-    this.cambioApellido = this.cambioApellido.bind(this);
-    this.cambioFecha = this.cambioFecha.bind(this);
-    this.cambioFoto = this.cambioFoto.bind(this);
-    // luego de guardar
-    this.mostrar = this.mostrar.bind(this);
-    this.eliminar = this.eliminar.bind(this);
+import Layout from "../../components/Layout";
 
-    this.guardar = this.guardar.bind(this);
-  }
+const Alumno = () => {
+  // Estado para almacenar la lista de alumnos
+  const [alumnos, setAlumnos] = useState([]);
+  // Estado para almacenar la posición actual en la lista de alumnos
+  const [pos, setPos] = useState(null);
+  // Estado para almacenar el título del formulario
+  const [titulo, setTitulo] = useState("AGREGAR ALUMNO");
+  // Estados para almacenar los datos del alumno
+  const [id, setId] = useState(0);
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
+  const [foto, setFoto] = useState("");
 
-  cambioNombre(e) {
-    console.log();
-    this.setState({
-      nombre: e.target.value,
-    });
-  }
-
-  cambioApellido(e) {
-    console.log();
-    this.setState({
-      apellido: e.target.value,
-    });
-  }
-
-  cambioFecha(e) {
-    this.setState({
-      fecha_nacimiento: e.target.value,
-    });
-  }
-
-  cambioFoto(e) {
-    this.setState({
-      foto: e.target.files[0],
-    });
-  }
-
-  componentDidMount() {
+  // Obtener la lista de alumnos al cargar el componente
+  useEffect(() => {
     axios.get("http://127.0.0.1:8000/alumno/").then((res) => {
-      console.log(res.data);
-      this.setState({ alumnos: res.data });
+      setAlumnos(res.data);
     });
-  }
+  }, []);
 
-  // Metodos
+  // Función para manejar el cambio de nombre en el formulario
+  const cambioNombre = (e) => {
+    setNombre(e.target.value);
+  };
 
-  // mostrar punto 5
-  mostrar(cod, index) {
-    axios.get("http://127.0.0.1:8000/alumno/" + cod).then((res) => {
-      this.setState({
-        pos: index,
-        titulo: "Editar",
-        id: res.data.id,
-        nombre: res.data.nombre,
-        apellido: res.data.apellido,
-        fecha_nacimiento: res.data.fecha_nacimiento,
-        foto: res.data.foto_url, 
-      });
+  // Función para manejar el cambio de apellido en el formulario
+  const cambioApellido = (e) => {
+    setApellido(e.target.value);
+  };
+
+  // Función para manejar el cambio de fecha de nacimiento en el formulario
+  const cambioFecha = (e) => {
+    setFechaNacimiento(e.target.value);
+  };
+
+  // Función para manejar el cambio de foto en el formulario
+  const cambioFoto = (e) => {
+    setFoto(e.target.files[0]);
+  };
+
+  // Función para mostrar los datos de un alumno en el formulario de edición
+  const mostrar = (cod, index) => {
+    axios.get(`http://127.0.0.1:8000/alumno/${cod}`).then((res) => {
+      setPos(index);
+      setTitulo("Editar");
+      setId(res.data.id);
+      setNombre(res.data.nombre);
+      setApellido(res.data.apellido);
+      setFechaNacimiento(res.data.fecha_nacimiento);
+      setFoto(res.data.foto_url);
     });
-  }
+  };
 
-  guardar(e) {
+  // Función para guardar los datos del alumno
+  const guardar = (e) => {
     e.preventDefault();
-    let cod = this.state.id;
+
+    if (!foto) {
+      console.log("Debe seleccionar una imagen");
+      return;
+    }
+
     const datos = new FormData();
-    datos.append('nombre', this.state.nombre);
-    datos.append('apellido', this.state.apellido);
-    datos.append('fecha_nacimiento', this.state.fecha_nacimiento);
-    datos.append('foto', this.state.foto);
-    console.log(datos);
-  
-    if (cod > 0) {
-      // edición de un registro
+    datos.append("nombre", nombre);
+    datos.append("apellido", apellido);
+    datos.append("fecha_nacimiento", fechaNacimiento);
+    datos.append("foto", foto);
+
+    const apiUrl = "http://127.0.0.1:8000";
+
+    if (id > 0) {
+      // Actualizar un alumno existente
       axios
-        .put("http://127.0.0.1:8000/alumno/" + cod, datos)
+        .put(`${apiUrl}/alumno/${id}`, datos)
         .then((res) => {
-          let indx = this.state.pos;
-          this.state.alumnos[indx] = res.data;
-          var temp = this.state.alumnos;
-          this.setState({
-            pos: null,
-            titulo: "Nuevo",
-            id: 0,
-            nombre: "",
-            apellido: "",
-            fecha_nacimiento: "",
-            foto: "",
-            alumnos: temp,
-          });
+          const updatedAlumnos = [...alumnos];
+          updatedAlumnos[pos] = res.data;
+          setPos(null);
+          setTitulo("Nuevo");
+          setId(0);
+          setNombre("");
+          setApellido("");
+          setFechaNacimiento("");
+          setFoto("");
+          setAlumnos(updatedAlumnos);
         })
         .catch((error) => {
           console.log(error.toString());
         });
     } else {
-      // nuevo registro
+      // Agregar un nuevo alumno
       axios
-        .post("http://127.0.0.1:8000/alumno/", datos)
+        .post(`${apiUrl}/alumno/`, datos)
         .then((res) => {
-          this.state.alumnos.push(res.data);
-          var temp = this.state.alumnos;
-          this.setState({
-            id: 0,
-            nombre: "",
-            apellido: "",
-            fecha_nacimiento: "",
-            foto: "",
-            alumnos: temp,
-          });
+          setAlumnos([...alumnos, res.data]);
+          setId(0);
+          setNombre("");
+          setApellido("");
+          setFechaNacimiento("");
+          setFoto("");
         })
         .catch((error) => {
           console.log(error.toString());
         });
     }
-  }
-  
+  };
 
-  // eliminar 7
-  eliminar(cod) {
+  // Función para eliminar un alumno
+  const eliminar = (cod) => {
     let rpta = window.confirm("Desea Eliminar?");
     if (rpta) {
-      axios.delete("http://127.0.0.1:8000/alumno/" + cod).then((res) => {
-        this.setState(prevState => ({
-          alumnos: prevState.alumnos.filter((alumno) => alumno.id !== cod)
-        }));
+      axios.delete(`http://127.0.0.1:8000/alumno/${cod}`).then((res) => {
+        setAlumnos((prevAlumnos) =>
+          prevAlumnos.filter((alumno) => alumno.id !== cod)
+        );
       });
     }
-  }
-  
-  render() {
-    return (
-      <>
-        <nav className="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-          <a className="navbar-brand ps-3" href="index.html">
-            Start Bootstrap
-          </a>
+  };
 
-          <button
-            className="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0"
-            id="sidebarToggle"
-            href="#!"
-          >
-            <i className="fas fa-bars"></i>
-          </button>
-
-          <form className="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
-            <div className="input-group">
-              <input
-                className="form-control"
+  return (
+    <>
+      <Layout>
+        <Container>
+          <h1 className="mt-4">{titulo}</h1>
+          <Form onSubmit={guardar}>
+            <Form.Control type="hidden" defaultValue={id} />
+            <Form.Group className="mb-3">
+              <Form.Label>Ingrese Nombre:</Form.Label>
+              <Form.Control
                 type="text"
-                placeholder="Search for..."
-                aria-label="Search for..."
-                aria-describedby="btnNavbarSearch"
+                value={nombre}
+                onChange={cambioNombre}
               />
-              <button
-                className="btn btn-primary"
-                id="btnNavbarSearch"
-                type="button"
-              >
-                <i className="fas fa-search"></i>
-              </button>
-            </div>
-          </form>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Ingrese Apellido:</Form.Label>
+              <Form.Control
+                type="text"
+                value={apellido}
+                onChange={cambioApellido}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha:</Form.Label>
+              <Form.Control
+                type="date"
+                value={fechaNacimiento}
+                onChange={cambioFecha}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Foto:</Form.Label>
+              <Form.Control
+                type="file"
+                defaultValue={foto}
+                onChange={cambioFoto}
+              />
+            </Form.Group>
+            <Button variant="primary" type="submit">
+              GUARDAR
+            </Button>
+          </Form>
+          <hr />
+        </Container>
 
-          <ul className="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                id="navbarDropdown"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <i className="fas fa-user fa-fw"></i>
-              </a>
-              <ul
-                className="dropdown-menu dropdown-menu-end"
-                aria-labelledby="navbarDropdown"
-              >
-                <li>
-                  <a className="dropdown-item" href="#!">
-                    Settings
-                  </a>
-                </li>
-                <li>
-                  <a className="dropdown-item" href="#!">
-                    Activity Log
-                  </a>
-                </li>
-                <li>
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
-                  <a className="dropdown-item" href="#!">
-                    Logout
-                  </a>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </nav>
-        <div id="layoutSidenav">
-          <div id="layoutSidenav_nav">
-            <nav
-              className="sb-sidenav accordion sb-sidenav-dark"
-              id="sidenavAccordion"
-            >
-              <div className="sb-sidenav-menu">
-                <div className="nav">
-                  <div className="sb-sidenav-menu-heading">MODULOS</div>
-                  <a
-                    className="nav-link collapsed"
-                    href="#"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#collapseLayouts"
-                    aria-expanded="false"
-                    aria-controls="collapseLayouts"
-                  >
-                    <div className="sb-nav-link-icon">
-                      <i className="fas fa-columns"></i>
-                    </div>
-                    Usuarios
-                    <div className="sb-sidenav-collapse-arrow">
-                      <i className="fas fa-angle-down"></i>
-                    </div>
-                  </a>
-                </div>
-              </div>
-              <div className="sb-sidenav-footer">
-                <div className="small">Logged in as:</div>
-                Start Bootstrap
-              </div>
-            </nav>
-          </div>
-          <div id="layoutSidenav_content">
-            <main>
-              <div className="container-fluid px-4">
-                <h1 className="mt-4">Static Navigation</h1>
-                <ol className="breadcrumb mb-4">
-                  <li className="breadcrumb-item">
-                    <a href="index.html">Inicio</a>
-                  </li>
-                  <li className="breadcrumb-item active">Parentescos</li>
-                </ol>
-                <div className="card mb-4">
-                  <div className="card-body">
-                    <Container>
-                      <h1>{this.state.titulo}</h1>
-                      <Form onSubmit={this.guardar}>
-                        <Form.Control
-                          type="hidden"
-                          defaultValue={this.state.id}
-                        />
-                        <Form.Group className="mb-3">
-                          <Form.Label>Ingrese Nombre:</Form.Label>
-                          <Form.Control
-                            type="text"
-                            value={this.state.nombre}
-                            onChange={this.cambioNombre}
-                          />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                          <Form.Label>Ingrese Apellido:</Form.Label>
-                          <Form.Control
-                            type="text"
-                            value={this.state.apellido}
-                            onChange={this.cambioApellido}
-                          />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                          <Form.Label>Fecha:</Form.Label>
-                          <Form.Control
-                            type="date"
-                            value={this.state.fecha_nacimiento}
-                            onChange={this.cambioFecha}
-                          />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                          <Form.Label>Foto:</Form.Label>
-                          <Form.Control
-                            type="file"
-                            defaultValue={this.state.foto}
-                            onChange={this.cambioFoto}
-                          />
-                        </Form.Group>
-                        <Button variant="primary" type="submit">
-                          GUARDAR
-                        </Button>
-                      </Form>
-                      <hr />
-                    </Container>
-                  </div>
-                </div>
-
-                <div className="card mb-4">
-                  <div className="card-body">
-                    <Table>
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Nombre</th>
-                          <th>Apellido</th>
-                          <th>Fecha</th>
-                          <th>Foto</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {this.state.alumnos.map((alumno, index) => {
-                          return (
-                            <tr key={alumno.id}>
-                              <td>{alumno.id}</td>
-                              <td>{alumno.nombre}</td>
-                              <td>{alumno.apellido}</td>
-                              <td>{alumno.fecha_nacimiento}</td>
-                              <td>
-                              <img key={alumno.id} src={`${alumno.foto}`} alt="Foto de alumno" />
-                              </td>
-                              <td>
-                                <Button
-                                  variant="success"
-                                  onClick={() => this.mostrar(alumno.id, index)}
-                                >
-                                  Editar
-                                </Button>
-                                <Button
-                                  variant="danger"
-                                  onClick={() => this.eliminar(alumno.id)}
-                                >
-                                  Eliminar
-                                </Button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </Table>
-                  </div>
-                </div>
-              </div>
-            </main>
-            <footer className="py-4 bg-light mt-auto">
-              <div className="container-fluid px-4">
-                <div className="d-flex align-items-center justify-content-between small">
-                  <div className="text-muted">
-                    Copyright &copy; Your Website 2022
-                  </div>
-                  <div>
-                    <a href="#">Privacy Policy</a>
-                    &middot;
-                    <a href="#">Terms &amp; Conditions</a>
-                  </div>
-                </div>
-              </div>
-            </footer>
-          </div>
-        </div>
-      </>
-    );
-  }
-}
+        <Container>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Fecha</th>
+                <th>Foto</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {alumnos.map((alumno, index) => {
+                return (
+                  <tr key={alumno.id}>
+                    <td>{alumno.id}</td>
+                    <td>{alumno.nombre}</td>
+                    <td>{alumno.apellido}</td>
+                    <td>{alumno.fecha_nacimiento}</td>
+                    <td>
+                      <img
+                        key={alumno.id}
+                        src={`${alumno.foto}`}
+                        alt="Foto de alumno"
+                        className="img-thumbnail"
+                      />
+                    </td>
+                    <td>
+                      <Button
+                        variant="success"
+                        onClick={() => mostrar(alumno.id, index)}
+                        className="mr-2"
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => eliminar(alumno.id)}
+                      >
+                        Eliminar
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </Container>
+      </Layout>
+    </>
+  );
+};
 
 export default Alumno;

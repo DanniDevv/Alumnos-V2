@@ -2,7 +2,7 @@ function NavBar() {
   return (
     <nav className="sb-topnav navbar navbar-expand navbar-dark bg-dark">
       <a className="navbar-brand ps-3" href="index.html">
-        Start Bootstrap
+        Movil-App
       </a>
 
       <button
